@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildlife Explorer</title>
+    <style>
+        :root {
+            --primary: #1b4332;
+            --secondary: #d8f3dc;
+            --accent: #ffb703;
+            --white: #ffffff;
+            --overlay: rgba(0, 0, 0, 0.8);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- Auth Section --- */
+        #auth-container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+        }
+
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 350px;
+            text-align: center;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        input {
+            width: 85%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        button {
+            width: 95%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover { background: #081c15; transform: translateY(-2px); }
+
+        /* --- Main Content --- */
+        #main-app { display: none; padding: 20px; }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .animal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .card.reveal { opacity: 1; transform: scale(1); }
+
+        .card:hover {
+            transform: translateY(-10px) rotate(2deg);
+            background: var(--secondary);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-emoji { font-size: 4rem; display: block; margin-bottom: 10px; }
+
+        /* --- Modal (Popup) Styling --- */
+        #modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--overlay);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            border-radius: 30px;
+            position: relative;
+            text-align: center;
+            animation: zoomIn 0.4s ease;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px; right: 25px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .habitat-tag {
+            background: var(--accent);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-container">
+        <div id="login-form" class="auth-box">
+            <h2 style="color: var(--primary)">Welcome Back 🦁</h2>
+            <input type="text" id="user-in" placeholder="Username">
+            <input type="password" id="pass-in" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <p style="font-size: 0.9rem">New here? <a href="#" onclick="toggleAuth()" style="color: var(--primary)">Register</a></p>
+        </div>
+
+        <div id="reg-form" class="auth-box hidden">
+            <h2 style="color: var(--primary)">Create Account 🦜</h2>
+            <input type="text" id="reg-user" placeholder="Choose Username">
+            <input type="password" id="reg-pass" placeholder="Choose Password">
+            <button onclick="register()">Sign Up</button>
+            <p style="font-size: 0.9rem">Have an account? <a href="#" onclick="toggleAuth()" style="color: var(--primary)">Login</a></p>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="navbar">
+            <h2>WildWiki 🐾</h2>
+            <button onclick="logout()" style="width: auto; padding: 8px 20px; background: #e63946;">Logout</button>
+        </div>
+
+        <div class="animal-grid" id="grid">
+            </div>
+    </div>
+
+    <div id="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="modal-emoji" style="font-size: 6rem;"></div>
+            <h2 id="modal-title" style="margin: 10px 0;"></h2>
+            <div id="modal-habitat" class="habitat-tag"></div>
+            <p id="modal-info" style="line-height: 1.6; color: #444; margin-top: 20px;"></p>
+            <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <strong>Where to find them:</strong>
+                <p id="modal-location" style="color: var(--primary); font-weight: 500;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const animalData = [
+            { name: "Lion", icon: "🦁", habitat: "Savannah", info: "Lions are the only cats that live in large social groups called prides. They are apex predators and known as the kings of the jungle (though they live in grasslands!).", loc: "Sub-Saharan Africa and the Gir Forest in India." },
+            { name: "Elephant", icon: "🐘", habitat: "Grasslands/Forests", info: "The largest land animals on Earth. They are famous for their long trunks, tusks, and incredible memory. They use their trunks for breathing, smelling, and grasping objects.", loc: "Africa and South/Southeast Asia." },
+            { name: "Tiger", icon: "🐯", habitat: "Dense Forests", info: "Tigers are the largest cat species in the world. Each tiger has a unique pattern of stripes, just like human fingerprints. They are excellent swimmers.", loc: "Across Asia, mainly in India, Russia, and Thailand." },
+            { name: "Panda", icon: "🐼", habitat: "Bamboo Forests", info: "Pandas spend about 12 hours a day eating bamboo. They have a 'sixth toe' (an elongated wrist bone) that helps them grip bamboo stalks while eating.", loc: "The mountains of Central China." },
+            { name: "Penguin", icon: "🐧", habitat: "Ice/Coasts", info: "Penguins are flightless birds that have evolved to be master swimmers. They spend half their time on land and half in the ocean hunting for fish.", loc: "Antarctica, South America, and Africa (Galápagos Islands)." },
+            { name: "Giraffe", icon: "🦒", habitat: "Open Woodlands", info: "The tallest mammals on Earth. Their legs alone are taller than many humans—about 6 feet! Their long necks help them reach the tasty leaves at the tops of trees.", loc: "Scattered regions throughout Africa." },
+            { name: "Shark", icon: "🦈", habitat: "Oceans", info: "Sharks have been in the oceans for over 400 million years. They don't have bones—their skeletons are made of cartilage, the same stuff in your nose and ears!", loc: "All oceans across the globe, from shallow reefs to the deep sea." },
+            { name: "Wolf", icon: "🐺", habitat: "Mountains/Tundra", info: "Wolves are highly social animals that live in packs led by a family unit. They use complex howling to communicate over long distances.", loc: "North America, Europe, and Asia." },
+            { name: "Monkey", icon: "🐒", habitat: "Rainforests", info: "Monkeys are highly intelligent and use their tails (some species) like a fifth hand to swing through trees. They are known for their curiosity.", loc: "Central/South America, Africa, and Asia." },
+            { name: "Fox", icon: "🦊", habitat: "Diverse Terrains", info: "Foxes are very adaptable and live in deserts, forests, and even cities. They are known for being clever and have excellent hearing.", loc: "Found on every continent except Antarctica." }
+        ];
+
+        // --- AUTH LOGIC ---
+        function toggleAuth() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('reg-form').classList.toggle('hidden');
+        }
+
+        function register() {
+            const u = document.getElementById('reg-user').value;
+            const p = document.getElementById('reg-pass').value;
+            if (u && p) {
+                localStorage.setItem(u, p);
+                alert("Registration Successful! Please login.");
+                toggleAuth();
+            }
+        }
+
+        function login() {
+            const u = document.getElementById('user-in').value;
+            const p = document.getElementById('pass-in').value;
+            if (localStorage.getItem(u) === p && u !== "") {
+                startApp();
+            } else {
+                alert("Access Denied: Incorrect Username or Password.");
+            }
+        }
+
+        // --- APP LOGIC ---
+        function startApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-app').style.display = 'block';
+            
+            const grid = document.getElementById('grid');
+            animalData.forEach((animal, i) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <span class="card-emoji">${animal.icon}</span>
+                    <h3>${animal.name}</h3>
+                    <small style="color: #888">Click to explore</small>
+                `;
+                card.onclick = () => openModal(animal);
+                grid.appendChild(card);
+                
+                // Staggered Fade-in Animation
+                setTimeout(() => card.classList.add('reveal'), i * 100);
+            });
+        }
+
+        function openModal(animal) {
+            document.getElementById('modal-emoji').innerText = animal.icon;
+            document.getElementById('modal-title').innerText = animal.name;
+            document.getElementById('modal-habitat').innerText = "Habitat: " + animal.habitat;
+            document.getElementById('modal-info').innerText = animal.info;
+            document.getElementById('modal-location').innerText = animal.loc;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        function logout() { location.reload(); }
+    </script>
+</body>
+</html>
